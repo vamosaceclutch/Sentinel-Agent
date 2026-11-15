@@ -1,0 +1,6 @@
+{
+  "name": "sentinel-gate-tests",
+  "private": true,
+  "description": "Compile and test AuditGate on a local in-memory EVM",
+  "dependencies": { "solc": "0.8.24" }
+}
