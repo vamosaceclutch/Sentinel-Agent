@@ -1,0 +1,119 @@
+[
+  {
+    "name": "reentrancy",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      60,
+      60,
+      60
+    ]
+  },
+  {
+    "name": "tx.origin",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      75,
+      72,
+      75
+    ]
+  },
+  {
+    "name": "missing access control",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      35,
+      35,
+      20
+    ]
+  },
+  {
+    "name": "selfdestruct",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      50,
+      50,
+      50
+    ]
+  },
+  {
+    "name": "delegatecall",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      60,
+      60,
+      60
+    ]
+  },
+  {
+    "name": "unchecked call",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      75,
+      75,
+      75
+    ]
+  },
+  {
+    "name": "weak randomness",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      30,
+      40,
+      55
+    ]
+  },
+  {
+    "name": "oracle manipulation",
+    "pass": [
+      true,
+      true,
+      true
+    ],
+    "scores": [
+      25,
+      25,
+      25
+    ]
+  },
+  {
+    "name": "SAFE control",
+    "pass": [
+      false,
+      false,
+      false
+    ],
+    "scores": [
+      null,
+      null,
+      null
+    ]
+  }
+]
