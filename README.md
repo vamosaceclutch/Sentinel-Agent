@@ -47,6 +47,8 @@ flowchart LR
 | SentinelRegistry | [`0x2ABfB402211b16de90c7411434a7E64CC33a5Dc7`](https://testnet.snowtrace.io/address/0x2ABfB402211b16de90c7411434a7E64CC33a5Dc7) (verified) |
 | AuditGate | [`0x29F642d06A62956747D5b5d4d03a8f4d21f9ab97`](https://testnet.snowtrace.io/address/0x29F642d06A62956747D5b5d4d03a8f4d21f9ab97) |
 | GuardedLaunchpad | [`0x416001B4cbe88352531F41854A8AeBde8Fb0A8bD`](https://testnet.snowtrace.io/address/0x416001B4cbe88352531F41854A8AeBde8Fb0A8bD) |
+| VulnerableVault (sample, verified) | [`0x67F23Ed0410ABc1B6FC6fCE7FEEc9c58ff7C346A`](https://testnet.snowtrace.io/address/0x67F23Ed0410ABc1B6FC6fCE7FEEc9c58ff7C346A) |
+| FixedVault (sample, verified) | [`0x9Ba8E1eBb127510E8881440105254955D3bf1691`](https://testnet.snowtrace.io/address/0x9Ba8E1eBb127510E8881440105254955D3bf1691) |
 
 ## Score
 
@@ -60,8 +62,8 @@ the same number. The AI decides which findings exist and their severity, and tha
 ## Quick start (Windows PowerShell)
 
 ```powershell
-git clone <this repo>
-cd sentinel-agent
+git clone https://github.com/vamosaceclutch/Sentinel-Agent.git
+cd Sentinel-Agent
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
