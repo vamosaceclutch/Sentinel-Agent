@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SentinelAgent</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0f17; --card: #131a27; --line: #223049; --text: #e6ecf5; --muted: #8fa0ba;
+    --good: #2ecc8f; --warn: #f5b942; --bad: #ff5c6c; --accent: #6ea8ff;
+    --critical: #c77dff; --high: #ff5c6c; --medium: #ff9f43; --low: #f5d442; --info: #6ea8ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 28px; margin: 8px 0 4px; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+          padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 12px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tab { background: transparent; color: var(--muted); border: 1px solid var(--line);
+         border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 14px; }
+  .tab.active { color: var(--text); border-color: var(--accent); background: #18233a; }
+  input[type=text], textarea { width: 100%; background: #0d1420; color: var(--text);
+         border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+         font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+  textarea { min-height: 180px; resize: vertical; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  label.chk { color: var(--muted); font-size: 14px; display: flex; gap: 8px; align-items: center; }
+  label.chk.off { opacity: .45; }
+  button.go { background: var(--accent); color: #07101f; border: 0; border-radius: 8px;
+         padding: 10px 20px; font-weight: 600; cursor: pointer; font-size: 14px; }
+  button.go:disabled { opacity: .5; cursor: wait; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent);
+         border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 14px; }
+  .status { color: var(--muted); font-size: 14px; margin-top: 12px; min-height: 20px; }
+  .status.err { color: var(--bad); }
+  .hidden { display: none; }
+  .result-top { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .gauge { width: 220px; flex: none; }
+  .gauge .num { font-size: 40px; font-weight: 700; }
+  .name { font-size: 20px; font-weight: 600; }
+  .summary { color: var(--muted); margin-top: 6px; }
+  .finding { border-left: 4px solid var(--info); background: #0f1626; border-radius: 8px;
+             padding: 12px 14px; margin-top: 12px; }
+  .finding .head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .sev { font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 8px;
+         border-radius: 999px; color: #07101f; }
+  .fn { color: var(--muted); font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  .finding p { margin: 8px 0 0; font-size: 14px; }
+  .finding .rec { color: var(--good); }
+  .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; font-size: 14px; }
+  .kv div:nth-child(odd) { color: var(--muted); }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; word-break: break-all; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.ok { background: rgba(46,204,143,.15); color: var(--good); }
+  .pill.no { background: rgba(255,92,108,.15); color: var(--bad); }
+  .pill.na { background: rgba(143,160,186,.15); color: var(--muted); }
+  a { color: var(--accent); }
+  .note { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  .warn { color: var(--warn); font-size: 13px; margin-top: 10px; }
+  pre.code { background: #0d1420; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+             font-family: ui-monospace, Consolas, monospace; font-size: 12px; overflow: auto;
+             max-height: 360px; white-space: pre; margin: 10px 0 0; }
+  .finding ul { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sentinel<span>Agent</span></h1>
+  <p class="sub">AI thẩm định smart contract, đóng dấu kết quả lên Avalanche Fuji.</p>
+
+  <!-- 1. Nhập liệu -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tabAddr">Địa chỉ contract</button>
+      <button class="tab" id="tabCode">Dán mã Solidity</button>
+    </div>
+    <div id="boxAddr">
+      <input type="text" id="addr" placeholder="0x... (contract đã verify trên Fuji)">
+    </div>
+    <div id="boxCode" class="hidden">
+      <textarea id="code" placeholder="// dán mã Solidity vào đây"></textarea>
+    </div>
+    <div class="row">
+      <label class="chk" id="recLabel"><input type="checkbox" id="rec"> Đóng dấu kết quả lên blockchain</label>
+      <button class="go" id="goBtn">Audit</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- 2. Kết quả audit -->
+  <div class="card hidden" id="resultCard">
+    <div class="result-top">
+      <div class="gauge">
+        <svg viewBox="0 0 200 120" width="100%" aria-label="Safety score">
+          <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="#223049" stroke-width="16" stroke-linecap="round"/>
+          <path id="arc" d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="#2ecc8f" stroke-width="16"
+                stroke-linecap="round" stroke-dasharray="251.33" stroke-dashoffset="251.33"
+                style="transition: stroke-dashoffset .9s ease, stroke .4s"/>
+          <text id="scoreText" x="100" y="92" text-anchor="middle" class="num" fill="#e6ecf5"
+                font-size="40" font-weight="700">0</text>
+          <text x="100" y="112" text-anchor="middle" fill="#8fa0ba" font-size="11">Safety Score / 100</text>
+        </svg>
+      </div>
+      <div style="flex:1; min-width:240px">
+        <div class="name" id="cName"></div>
+        <div class="summary" id="cSummary"></div>
+      </div>
+    </div>
+    <div id="findings"></div>
+    <div class="note" id="metaInfo"></div>
+    <div class="row hidden" id="patchRow">
+      <button class="ghost" id="patchBtn">Đề xuất bản vá bằng AI</button>
+      <span class="note" id="patchStatus" style="margin:0"></span>
+    </div>
+    <div id="patchBox" class="hidden"></div>
+    <div class="note" id="stampInfo"></div>
+  </div>
+
+  <!-- 3. Badge đọc thẳng từ chain -->
+  <div class="card">
+    <h2>Badge on-chain</h2>
+    <p class="note" style="margin-top:0">Phần này đọc trực tiếp từ blockchain Fuji bằng trình duyệt của bạn, không đi qua backend.</p>
+    <input type="text" id="badgeAddr" placeholder="0x... địa chỉ contract muốn xem badge">
+    <div class="row"><button class="ghost" id="badgeBtn">Đọc từ chain</button></div>
+    <div id="badge" style="margin-top:14px"></div>
+  </div>
+
+  <div class="note">
+    Registry: <a id="regLink" target="_blank" rel="noopener"></a><br>
+    Điểm do công thức cố định tính từ các lỗi AI tìm ra (cứ 40 điểm phạt thì điểm giảm một nửa); mức độ nghiêm trọng có thể lệch nhẹ giữa các lần chạy.
+    Đây không thay thế cho một cuộc audit chuyên nghiệp.
+  </div>
+</div>
+
+<script>
+// ---------- Cấu hình ----------
+const API = "http://127.0.0.1:8000";
+const RPC = "https://api.avax-test.network/ext/bc/C/rpc";
+const REGISTRY = "0x2ABfB402211b16de90c7411434a7E64CC33a5Dc7";
+const SCAN = "https://testnet.snowtrace.io";
+// Dán địa chỉ AuditGate sau khi deploy trên Fuji. Để trống thì trang ẩn phần "Cổng AuditGate".
+const GATE = "0x29F642d06A62956747D5b5d4d03a8f4d21f9ab97";
+
+// Chỉ cần 2 hàm đọc (miễn phí). Struct tĩnh trả về có cách mã hóa giống 4 giá trị rời nên khai báo phẳng.
+const ABI = [
+  "function latestAudit(address t) view returns (address target, uint64 timestamp, uint8 score, bytes32 reportHash)",
+  "function auditCount(address t) view returns (uint256)"
+];
+const provider = new ethers.JsonRpcProvider(RPC, 43113, { staticNetwork: true });
+const registry = new ethers.Contract(REGISTRY, ABI, provider);
+const GATE_ABI = [
+  "function check(address t) view returns (uint8 verdict, uint8 score, uint64 timestamp)",
+  "function minScore() view returns (uint8)",
+  "function maxAge() view returns (uint64)"
+];
+const gateC = GATE ? new ethers.Contract(GATE, GATE_ABI, provider) : null;
+const VERDICTS = ["chưa được audit", "điểm dưới ngưỡng", "audit đã quá cũ", "đạt"];
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+$("regLink").href = `${SCAN}/address/${REGISTRY}`;
+$("regLink").textContent = REGISTRY;
+
+// ---------- Chuyển tab ----------
+let mode = "addr";
+function setMode(m) {
+  mode = m;
+  $("tabAddr").classList.toggle("active", m === "addr");
+  $("tabCode").classList.toggle("active", m === "code");
+  $("boxAddr").classList.toggle("hidden", m !== "addr");
+  $("boxCode").classList.toggle("hidden", m !== "code");
+  // Chỉ đóng dấu khi audit theo địa chỉ (agent tự tải mã đã verify, không tin mã người dùng dán)
+  $("rec").disabled = m !== "addr";
+  if (m !== "addr") $("rec").checked = false;
+  $("recLabel").classList.toggle("off", m !== "addr");
+}
+$("tabAddr").onclick = () => setMode("addr");
+$("tabCode").onclick = () => setMode("code");
+
+function setStatus(msg, isErr = false) {
+  $("status").textContent = msg;
+  $("status").classList.toggle("err", isErr);
+}
+
+// ---------- Gauge ----------
+function drawGauge(score) {
+  const len = 251.33;
+  const color = score >= 75 ? "#2ecc8f" : score >= 40 ? "#f5b942" : "#ff5c6c";
+  $("arc").style.stroke = color;
+  $("arc").style.strokeDashoffset = len * (1 - score / 100);
+  $("scoreText").textContent = score;
+}
+
+// ---------- Findings ----------
+function renderFindings(list) {
+  const box = $("findings");
+  if (!list.length) {
+    box.innerHTML = `<div class="finding" style="border-color:var(--good)"><p>Không phát hiện rủi ro nào.</p></div>`;
+    return;
+  }
+  box.innerHTML = list.map((f) => {
+    const sev = String(f.severity || "info").toLowerCase();
+    const col = `var(--${["critical","high","medium","low","info"].includes(sev) ? sev : "info"})`;
+    return `<div class="finding" style="border-left-color:${col}">
+      <div class="head">
+        <span class="sev" style="background:${col}">${esc(sev)}</span>
+        <strong>${esc(f.title)}</strong>
+        <span class="fn">${esc(f.function)}</span>
+      </div>
+      <p>${esc(f.description)}</p>
+      <p class="rec">Gợi ý sửa: ${esc(f.recommendation)}</p>
+    </div>`;
+  }).join("");
+}
+
+// ---------- Băm báo cáo (phải giống hệt chain.py: JSON chuẩn hóa, khóa sắp xếp, không khoảng trắng) ----------
+function canon(v) {
+  if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+  if (v && typeof v === "object")
+    return "{" + Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + canon(v[k])).join(",") + "}";
+  return JSON.stringify(v);
+}
+function hashReport(report) {
+  const copy = { ...report };
+  delete copy.on_chain; // backend băm báo cáo TRƯỚC khi thêm trường on_chain
+  return ethers.keccak256(ethers.toUtf8Bytes(canon(copy)));
+}
+
+// ---------- Cổng AuditGate: một contract khác đọc điểm từ Registry ----------
+async function gateBlock(addr) {
+  if (!gateC) return "";
+  try {
+    const [v] = await gateC.check(addr);
+    const [minScore, maxAge] = await Promise.all([gateC.minScore(), gateC.maxAge()]);
+    const verdict = Number(v);
+    const pass = verdict === 3;
+    const days = Number(maxAge) ? `, audit không quá ${Math.round(Number(maxAge) / 86400)} ngày` : "";
+    return `<div class="kv" style="margin-top:10px">
+      <div>Cổng AuditGate</div><div><span class="pill ${pass ? "ok" : "no"}">${pass ? "Qua cổng" : "Bị chặn: " + esc(VERDICTS[verdict] || "không rõ")}</span></div>
+      <div>Điều kiện</div><div>điểm ≥ ${Number(minScore)}${esc(days)}</div>
+      <div>Contract cổng</div><div><a target="_blank" rel="noopener" href="${SCAN}/address/${GATE}" class="mono">${esc(GATE)}</a></div>
+    </div>`;
+  } catch (e) {
+    return `<div class="note">Không đọc được cổng AuditGate: ${esc(e.shortMessage || e.message)}</div>`;
+  }
+}
+
+// ---------- Badge: đọc thẳng từ chain ----------
+async function showBadge(address, report) {
+  const out = $("badge");
+  out.innerHTML = `<span class="note">Đang đọc từ chain...</span>`;
+  try {
+    if (!ethers.isAddress(address)) throw new Error("Địa chỉ không hợp lệ");
+    const addr = ethers.getAddress(address);
+    const count = Number(await registry.auditCount(addr));
+    if (count === 0) {
+      out.innerHTML = `<span class="pill na">Chưa có audit nào được đóng dấu cho địa chỉ này</span>` + await gateBlock(addr);
+      return;
+    }
+    const a = await registry.latestAudit(addr);
+    const when = new Date(Number(a.timestamp) * 1000).toLocaleString("vi-VN");
+    let integrity = `<span class="pill na">Chưa kiểm (cần chạy audit trong trang này)</span>`;
+    if (report) {
+      const same = hashReport(report).toLowerCase() === String(a.reportHash).toLowerCase();
+      integrity = same
+        ? `<span class="pill ok">Khớp: báo cáo đang hiển thị đúng là báo cáo đã đóng dấu</span>`
+        : `<span class="pill no">Không khớp (có audit mới hơn, hoặc báo cáo khác bản đã đóng dấu)</span>`;
+    }
+    const gate = await gateBlock(addr);
+    out.innerHTML = `<div class="kv">
+      <div>Điểm trên chain</div><div><strong>${Number(a.score)} / 100</strong></div>
+      <div>Thời điểm</div><div>${esc(when)}</div>
+      <div>Số lần đã audit</div><div>${count}</div>
+      <div>Report hash</div><div class="mono">${esc(a.reportHash)}</div>
+      <div>Kiểm tra toàn vẹn</div><div>${integrity}</div>
+      <div>Sổ cái</div><div><a target="_blank" rel="noopener" href="${SCAN}/address/${REGISTRY}">Xem contract trên Snowtrace</a></div>
+    </div>` + gate;
+  } catch (e) {
+    out.innerHTML = `<span class="pill no">Không đọc được: ${esc(e.shortMessage || e.message)}</span>`;
+  }
+}
+$("badgeBtn").onclick = () => showBadge($("badgeAddr").value.trim(), null);
+
+// ---------- Gọi backend ----------
+async function runAudit() {
+  const payload = {};
+  if (mode === "addr") {
+    const a = $("addr").value.trim();
+    if (!a) return setStatus("Nhập địa chỉ contract trước.", true);
+    payload.address = a;
+    payload.record_on_chain = $("rec").checked;
+  } else {
+    const c = $("code").value.trim();
+    if (!c) return setStatus("Dán mã Solidity trước.", true);
+    payload.code = c;
+  }
+
+  $("goBtn").disabled = true;
+  $("resultCard").classList.add("hidden");
+  $("patchRow").classList.add("hidden");
+  $("patchBox").classList.add("hidden");
+  $("patchBox").innerHTML = "";
+  lastCtx = null;
+  setStatus("Đang audit... có thể mất vài chục giây (AI đang đọc code).");
+  try {
+    const res = await fetch(`${API}/audit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const d = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+      throw new Error(`Lỗi ${res.status}: ${d}`);
+    }
+    if (data.verified === false) {
+      throw new Error("Contract chưa được verify trên explorer. Hãy chuyển sang tab 'Dán mã Solidity'.");
+    }
+
+    $("cName").textContent = data.contract_name || "Contract";
+    $("cSummary").textContent = data.summary || "";
+    renderFindings(data.findings || []);
+    $("resultCard").classList.remove("hidden");
+    drawGauge(0);
+    requestAnimationFrame(() => setTimeout(() => drawGauge(Number(data.score) || 0), 50));
+
+    const meta = [];
+    if (data.model) meta.push("Model chấm: " + esc(data.model));
+    $("metaInfo").innerHTML = meta.join(" · ");
+    if (data.truncated) {
+      $("metaInfo").innerHTML += `<div class="warn">Cảnh báo: contract dài (${Number(data.source_chars).toLocaleString("vi-VN")} ký tự) nên AI chỉ xem phần đầu. Điểm có thể chưa phản ánh toàn bộ code.</div>`;
+    }
+    lastCtx = { payload, findings: data.findings || [] };
+    $("patchRow").classList.toggle("hidden", !(data.findings || []).length);
+
+    const oc = data.on_chain;
+    if (oc && oc.tx_hash) {
+      const speed = oc.confirm_seconds != null
+        ? ` Xác nhận sau ${oc.confirm_seconds} giây, phí ${Number(oc.fee_avax).toPrecision(3)} AVAX (gas ${Number(oc.gas_used).toLocaleString("vi-VN")}).`
+        : "";
+      $("stampInfo").innerHTML = `Đã đóng dấu lên chain: <a target="_blank" rel="noopener" href="${esc(oc.explorer)}">xem giao dịch</a>.${esc(speed)}`;
+    } else if (oc && oc.error) {
+      $("stampInfo").textContent = "Audit xong nhưng đóng dấu thất bại: " + oc.error;
+    } else {
+      $("stampInfo").textContent = "Kết quả này chưa được đóng dấu lên chain.";
+    }
+    setStatus("Xong.");
+
+    if (payload.address) {
+      $("badgeAddr").value = payload.address;
+      showBadge(payload.address, data);
+    }
+  } catch (e) {
+    const net = e instanceof TypeError;
+    setStatus(net ? "Không kết nối được backend. Server uvicorn đã chạy chưa?" : e.message, true);
+  } finally {
+    $("goBtn").disabled = false;
+  }
+}
+// ---------- Đề xuất bản vá ----------
+let lastCtx = null; // địa chỉ/mã và danh sách lỗi của lần audit gần nhất
+function renderPatch(d) {
+  const delta = Number(d.score_after) - Number(d.score_before);
+  const changes = (d.changes || []).map((c) => `<li>${esc(c)}</li>`).join("");
+  const left = (d.findings_after || []).map((f) => `<li>${esc(f.severity)}: ${esc(f.title)}</li>`).join("");
+  $("patchBox").innerHTML = `<div class="finding" style="border-left-color:var(--good)">
+    <div class="head"><strong>Bản vá đề xuất</strong>
+      <span class="pill ${delta > 0 ? "ok" : "na"}">Điểm ${Number(d.score_before)} → ${Number(d.score_after)}</span>
+      <span class="fn">${esc(d.model || "")}</span></div>
+    ${changes ? `<ul>${changes}</ul>` : ""}
+    <pre class="code">${esc(d.patched_code)}</pre>
+    <div class="row"><button class="ghost" id="copyBtn">Sao chép code</button><span class="note" id="copyNote" style="margin:0"></span></div>
+    ${left ? `<p class="note">Sau khi vá, audit lại vẫn thấy:</p><ul>${left}</ul>` : `<p class="note">Audit lại bản vá không thấy phát hiện nào.</p>`}
+    <p class="warn">Bản vá do AI viết và chưa được biên dịch. Hãy đọc kỹ, thử biên dịch trong Remix rồi mới deploy. Điểm "sau" là kết quả audit lại chính bản vá này bằng cùng công thức.</p>
+  </div>`;
+  $("patchBox").classList.remove("hidden");
+  $("copyBtn").onclick = async () => {
+    try { await navigator.clipboard.writeText(d.patched_code); $("copyNote").textContent = "Đã sao chép."; }
+    catch (e) { $("copyNote").textContent = "Không sao chép tự động được, hãy bôi đen và copy thủ công."; }
+  };
+}
+async function runPatch() {
+  if (!lastCtx) return;
+  $("patchBtn").disabled = true;
+  $("patchStatus").textContent = "AI đang viết bản vá rồi audit lại, mất khoảng 30 đến 60 giây...";
+  try {
+    const body = { findings: lastCtx.findings };
+    if (lastCtx.payload.address) body.address = lastCtx.payload.address;
+    else body.code = lastCtx.payload.code;
+    const res = await fetch(`${API}/patch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const d = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+      throw new Error(`Lỗi ${res.status}: ${d}`);
+    }
+    renderPatch(data);
+    $("patchStatus").textContent = "";
+  } catch (e) {
+    $("patchStatus").textContent = e instanceof TypeError ? "Không kết nối được backend." : e.message;
+  } finally {
+    $("patchBtn").disabled = false;
+  }
+}
+$("patchBtn").onclick = runPatch;
+$("goBtn").onclick = runAudit;
+setMode("addr");
+</script>
+</body>
+</html>
