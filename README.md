@@ -9,6 +9,21 @@ Phần lớn công cụ audit bằng AI chỉ dừng ở một bản báo cáo t
 (registry) trên Avalanche Fuji. Một contract thứ hai là `AuditGate` đọc registry đó, nhờ vậy launchpad,
 vault hay DEX có thể chặn contract chưa audit hoặc điểm thấp **ngay trong code**, không cần con người duyệt.
 
+## Dành cho ai
+
+- **Nhà phát triển** muốn có một điểm kiểm tra nhanh cho contract của mình trước khi ra mắt.
+- **Giao thức** như launchpad, vault, DEX muốn chặn contract chưa audit hoặc điểm thấp ngay trong code, không cần người duyệt tay.
+- **Người dùng** muốn tự kiểm chứng kết quả audit trên Snowtrace thay vì tin lời dự án.
+
+## Vì sao dùng SentinelAgent
+
+- Kết quả là **dữ liệu trên chain** mà contract khác đọc được, không chỉ là một báo cáo cho người đọc.
+- Điểm do một công thức cố định tính: cùng một danh sách lỗi luôn ra cùng một điểm.
+- Giao diện tính lại hash của báo cáo và so với hash đã đóng dấu, nên biết báo cáo có bị sửa hay không.
+- Mỗi lần đóng dấu hiện gas, phí và thời gian xác nhận đo từ biên lai giao dịch thật.
+
+**Không dành cho:** thay thế audit chuyên nghiệp hoặc bảo vệ tiền thật. Đây là công cụ chạy trên testnet, xem phần giới hạn bên dưới.
+
 ## Cách hoạt động
 
 ```mermaid

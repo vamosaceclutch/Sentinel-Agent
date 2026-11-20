@@ -9,6 +9,21 @@ Most AI audit tools stop at a report on a screen. SentinelAgent turns the result
 registry on Avalanche Fuji. A second contract, `AuditGate`, reads that registry, so a launchpad,
 vault or DEX can block unaudited or low-score contracts **in code**, with no human in the loop.
 
+## Who it is for
+
+- **Developers** who want a quick check on their contract before launch.
+- **Protocols** such as launchpads, vaults and DEXs that want to block unaudited or low-score contracts in code, with no manual review.
+- **Users** who want to verify an audit result on Snowtrace instead of taking the project's word for it.
+
+## Why use SentinelAgent
+
+- The result is **on-chain data** that other contracts can read, not just a report for people.
+- The score comes from a fixed formula: the same list of findings always gives the same score.
+- The UI re-hashes the displayed report and compares it with the stamped hash, so you can tell whether the report was altered.
+- Every stamp shows gas, fee and confirmation time measured from the real transaction receipt.
+
+**Not for:** replacing a professional audit or protecting real funds. This is a testnet tool, see the limits section below.
+
 ## How it works
 
 ```mermaid
