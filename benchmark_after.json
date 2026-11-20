@@ -1,0 +1,137 @@
+[
+  {
+    "name": "reentrancy",
+    "pass": [
+      true
+    ],
+    "scores": [
+      50
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "tx.origin",
+    "pass": [
+      true
+    ],
+    "scores": [
+      62
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "missing access control",
+    "pass": [
+      true
+    ],
+    "scores": [
+      25
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "selfdestruct",
+    "pass": [
+      true
+    ],
+    "scores": [
+      50
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "delegatecall",
+    "pass": [
+      true
+    ],
+    "scores": [
+      50
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "unchecked call",
+    "pass": [
+      true
+    ],
+    "scores": [
+      65
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "weak randomness",
+    "pass": [
+      true
+    ],
+    "scores": [
+      30
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "oracle manipulation",
+    "pass": [
+      true
+    ],
+    "scores": [
+      16
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  },
+  {
+    "name": "SAFE control",
+    "pass": [
+      true
+    ],
+    "scores": [
+      100
+    ],
+    "errors": [
+      null
+    ],
+    "models": [
+      "gemini-3.6-flash"
+    ]
+  }
+]
